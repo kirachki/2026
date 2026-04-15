@@ -1,0 +1,396 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--bg2:#181c27;--bg3:#1e2332;--bg4:#252b3b;
+  --border:#2d3448;--border2:#3a4260;
+  --blue:#4f8ef7;--blue2:#2d6de0;--blue-bg:rgba(79,142,247,.1);
+  --green:#34d399;--green-bg:rgba(52,211,153,.08);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,.08);
+  --red:#f87171;--red-bg:rgba(248,113,113,.08);
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --radius:8px;--radius2:12px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;min-height:600px;}
+/* layout */
+.app{display:grid;grid-template-rows:auto 1fr;height:100%;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;}
+.topbar-title{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--text);}
+.topbar-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.badge-sys{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(79,142,247,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:500;margin-left:auto;}
+
+.main{display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;}
+.panel{display:flex;flex-direction:column;overflow:hidden;}
+.panel+.panel{border-left:1px solid var(--border);}
+.panel-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg2);}
+.panel-head h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);}
+.panel-head .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);}
+.panel-body{flex:1;overflow-y:auto;padding:14px 18px;}
+
+/* 部署ツリー */
+.tree-section{margin-bottom:16px;}
+.tree-lv{display:flex;align-items:stretch;gap:0;}
+.tree-indent{width:20px;flex-shrink:0;position:relative;}
+.tree-indent::before{content:'';position:absolute;left:9px;top:0;bottom:0;width:1px;background:var(--border);}
+.tree-indent::after{content:'';position:absolute;left:9px;top:50%;width:11px;height:1px;background:var(--border);}
+.tree-node{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin:3px 0;cursor:pointer;transition:border-color .15s,background .15s;display:flex;align-items:center;gap:8px;}
+.tree-node:hover{border-color:var(--border2);background:var(--bg4);}
+.tree-node.selected{border-color:var(--blue);background:var(--blue-bg);}
+.tree-node.editing{border-color:var(--amber);background:var(--amber-bg);}
+.lv-badge{font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.lv1-b{background:rgba(79,142,247,.2);color:var(--blue);}
+.lv2-b{background:rgba(52,211,153,.2);color:var(--green);}
+.lv3-b{background:rgba(251,191,36,.2);color:var(--amber);}
+.node-name{flex:1;font-size:12px;}
+.node-code{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.node-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+.tree-node:hover .node-actions{opacity:1;}
+.tree-node.selected .node-actions{opacity:1;}
+.act-btn{background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text2);cursor:pointer;font-size:10px;padding:2px 6px;transition:background .12s,color .12s;}
+.act-btn:hover{background:var(--bg4);color:var(--text);}
+.act-btn.del:hover{border-color:var(--red);color:var(--red);}
+
+/* 編集フォーム */
+.edit-form{background:var(--bg3);border:1px solid var(--amber);border-radius:var(--radius2);padding:14px;margin:8px 0 12px;}
+.edit-form-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-field label{display:block;font-size:10px;color:var(--text3);margin-bottom:3px;}
+.form-field input,.form-field select{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:5px;color:var(--text);padding:5px 8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .15s;}
+.form-field input:focus,.form-field select:focus{border-color:var(--blue);}
+.form-btns{display:flex;gap:6px;margin-top:10px;}
+.btn{padding:5px 14px;border-radius:5px;border:none;font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:opacity .15s;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{opacity:.85;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-ghost:hover{background:var(--bg4);}
+.btn-sm{padding:3px 10px;font-size:10px;}
+.add-btn{display:flex;align-items:center;gap:5px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);color:var(--text3);cursor:pointer;font-size:11px;padding:6px 10px;width:100%;margin:4px 0;transition:border-color .15s,color .15s;font-family:'Noto Sans JP',sans-serif;}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+/* ユーザ紐付けパネル */
+.user-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:border-color .15s;}
+.user-row:hover{border-color:var(--border2);}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.user-info{flex:1;}
+.user-name{font-size:12px;font-weight:500;}
+.user-id{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.user-dept{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+.dept-tag{font-size:10px;background:var(--blue-bg);color:var(--blue);border:1px solid rgba(79,142,247,.2);border-radius:3px;padding:1px 6px;display:flex;align-items:center;gap:4px;}
+.dept-tag .remove{cursor:pointer;color:var(--text3);font-size:9px;line-height:1;}
+.dept-tag .remove:hover{color:var(--red);}
+.no-dept{font-size:10px;color:var(--text3);font-style:italic;}
+.assign-btn{background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:10px;padding:3px 8px;white-space:nowrap;transition:border-color .15s,color .15s;font-family:'Noto Sans JP',sans-serif;}
+.assign-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+/* 割り当てドロップダウン */
+.assign-popup{background:var(--bg3);border:1px solid var(--blue);border-radius:var(--radius2);padding:12px;margin:6px 0 10px;animation:fadeIn .15s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.assign-popup-title{font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.dept-select-tree{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto;margin-bottom:10px;}
+.dept-opt{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:background .12s,border-color .12s;}
+.dept-opt:hover{background:var(--bg4);border-color:var(--border2);}
+.dept-opt.picked{background:var(--blue-bg);border-color:var(--blue);}
+.dept-opt-name{font-size:12px;}
+.dept-opt-path{font-size:10px;color:var(--text3);}
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* saved flash */
+.saved-badge{display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid rgba(52,211,153,.3);border-radius:4px;padding:2px 8px;font-size:10px;animation:fadeIn .2s;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--blue);"></div>
+    <div class="topbar-title">マスタメンテナンス</div>
+    <div class="topbar-sub">M_Department / T1_LoginUser / T_UserDepartment</div>
+    <div class="badge-sys">管理者モード</div>
+  </div>
+
+  <div class="main">
+    <!-- 左：部署ツリー -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="dot"></div>
+        <h2>部署マスタ（M_Department）</h2>
+      </div>
+      <div class="panel-body" id="dept-panel"></div>
+    </div>
+
+    <!-- 右：ユーザ紐付け -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="dot" style="background:var(--green)"></div>
+        <h2>ユーザ所属管理（T_UserDepartment）</h2>
+      </div>
+      <div class="panel-body" id="user-panel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  depts: [
+    {id:1,code:'BANK',name:'あいうえお銀行',parent:null,lv:1},
+    {id:2,code:'KOJIN-HQ',name:'個人営業本部',parent:1,lv:2},
+    {id:3,code:'KOJIN-SUISIN',name:'個人営業推進部',parent:2,lv:3},
+  ],
+  users: [
+    {id:'user01',name:'営業 太郎',depts:[]},
+    {id:'user02',name:'営業 花子',depts:[]},
+    {id:'user03',name:'本部 次郎',depts:[]},
+  ],
+  nextDeptId: 10,
+  editingDept: null,   // {id} or {new,parent,lv}
+  addingChild: null,
+  assigningUser: null, // userId
+  pickedDept: null,
+};
+
+function getLv3Depts() {
+  return state.depts.filter(d => d.lv === 3);
+}
+function getDeptPath(deptId) {
+  const parts = [];
+  let d = state.depts.find(x => x.id === deptId);
+  while(d) {
+    parts.unshift(d.name);
+    d = d.parent ? state.depts.find(x => x.id === d.parent) : null;
+  }
+  return parts.join(' › ');
+}
+
+// ---- DEPT PANEL ----
+function renderDeptPanel() {
+  const el = document.getElementById('dept-panel');
+  const lv1s = state.depts.filter(d => d.lv === 1);
+  let html = '';
+
+  lv1s.forEach(lv1 => {
+    html += deptNodeHtml(lv1, '');
+    const lv2s = state.depts.filter(d => d.parent === lv1.id);
+    lv2s.forEach(lv2 => {
+      html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">`;
+      html += deptNodeHtml(lv2, '');
+      const lv3s = state.depts.filter(d => d.parent === lv2.id);
+      lv3s.forEach(lv3 => {
+        html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">`;
+        html += deptNodeHtml(lv3, '');
+        html += `</div></div>`;
+      });
+      // Lv3追加ボタン
+      if(state.editingDept && state.editingDept.new && state.editingDept.parent === lv2.id) {
+        html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">${editFormHtml(null, lv2.id, 3)}</div></div>`;
+      } else {
+        html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">
+          <button class="add-btn" onclick="startAddDept(${lv2.id},3)">＋ 部を追加</button>
+        </div></div>`;
+      }
+      // 編集フォーム for lv2
+      if(state.editingDept && state.editingDept.id === lv2.id) {
+        html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">${editFormHtml(lv2)}</div></div>`;
+      }
+      html += `</div></div>`;
+    });
+    // Lv2追加
+    if(state.editingDept && state.editingDept.new && state.editingDept.parent === lv1.id) {
+      html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">${editFormHtml(null, lv1.id, 2)}</div></div>`;
+    } else {
+      html += `<div style="display:flex"><div class="tree-indent"></div><div style="flex:1">
+        <button class="add-btn" onclick="startAddDept(${lv1.id},2)">＋ 本部を追加</button>
+      </div></div>`;
+    }
+    // 編集フォーム for lv1
+    if(state.editingDept && state.editingDept.id === lv1.id) {
+      html += editFormHtml(lv1);
+    }
+  });
+
+  // Lv1追加
+  if(state.editingDept && state.editingDept.new && state.editingDept.lv === 1) {
+    html += editFormHtml(null, null, 1);
+  } else {
+    html += `<button class="add-btn" onclick="startAddDept(null,1)">＋ 銀行を追加</button>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function deptNodeHtml(d, extra) {
+  const lvClass = ['','lv1-b','lv2-b','lv3-b'][d.lv];
+  const lvLabel = ['','Lv1','Lv2','Lv3'][d.lv];
+  const isEditing = state.editingDept && state.editingDept.id === d.id;
+  return `<div class="tree-node${isEditing?' editing':''}" onclick="selectDept(${d.id})">
+    <span class="lv-badge ${lvClass}">${lvLabel}</span>
+    <span class="node-name">${d.name}</span>
+    <span class="node-code">${d.code}</span>
+    <div class="node-actions">
+      <button class="act-btn btn-sm" onclick="event.stopPropagation();startEditDept(${d.id})">編集</button>
+      <button class="act-btn del btn-sm" onclick="event.stopPropagation();deleteDept(${d.id})">削除</button>
+    </div>
+  </div>`;
+}
+
+function editFormHtml(dept, parentId, lv) {
+  const isNew = !dept;
+  const lvLabels = ['','銀行','本部','部'];
+  const lvColors = ['','var(--blue)','var(--green)','var(--amber)'];
+  const lvNum = dept ? dept.lv : lv;
+  return `<div class="edit-form">
+    <div class="edit-form-title" style="color:${lvColors[lvNum]}">${isNew?'新規追加':'編集'} — Lv${lvNum} ${lvLabels[lvNum]}</div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>部署コード</label>
+        <input id="ef-code" type="text" value="${dept?dept.code:''}" placeholder="例: KOJIN-HQ">
+      </div>
+      <div class="form-field">
+        <label>部署名</label>
+        <input id="ef-name" type="text" value="${dept?dept.name:''}" placeholder="例: 個人営業本部">
+      </div>
+    </div>
+    <div class="form-btns">
+      <button class="btn btn-primary btn-sm" onclick="${isNew?`saveDept(null,${parentId},${lv})`:`saveDept(${dept.id})`}">保存</button>
+      <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">キャンセル</button>
+    </div>
+  </div>`;
+}
+
+function startAddDept(parentId, lv) {
+  state.editingDept = {new:true, parent:parentId, lv};
+  renderDeptPanel();
+}
+function startEditDept(id) {
+  state.editingDept = {id};
+  renderDeptPanel();
+}
+function selectDept(id) {}
+function cancelEdit() {
+  state.editingDept = null;
+  renderDeptPanel();
+}
+function saveDept(id, parentId, lv) {
+  const code = document.getElementById('ef-code').value.trim();
+  const name = document.getElementById('ef-name').value.trim();
+  if(!code || !name) return;
+  if(id) {
+    const d = state.depts.find(x => x.id === id);
+    d.code = code; d.name = name;
+    showSaved('dept-panel');
+  } else {
+    state.depts.push({id:state.nextDeptId++, code, name, parent:parentId, lv});
+  }
+  state.editingDept = null;
+  renderDeptPanel();
+  renderUserPanel();
+}
+function deleteDept(id) {
+  const hasChild = state.depts.some(d => d.parent === id);
+  if(hasChild){ alert('配下の部署を先に削除してください。'); return; }
+  state.depts = state.depts.filter(d => d.id !== id);
+  state.users.forEach(u => { u.depts = u.depts.filter(a => a.deptId !== id); });
+  renderDeptPanel(); renderUserPanel();
+}
+function showSaved(panelId) {
+  const el = document.getElementById(panelId);
+  const b = document.createElement('span');
+  b.className = 'saved-badge'; b.textContent = '✓ 保存しました';
+  el.prepend(b);
+  setTimeout(() => b.remove(), 2000);
+}
+
+// ---- USER PANEL ----
+function renderUserPanel() {
+  const el = document.getElementById('user-panel');
+  let html = '';
+  state.users.forEach(u => {
+    const initials = u.name.slice(-2);
+    const assignOpen = state.assigningUser === u.id;
+    const deptTags = u.depts.map(a => {
+      const d = state.depts.find(x => x.id === a.deptId);
+      return d ? `<span class="dept-tag"><span class="lv-badge lv3-b" style="font-size:8px">Lv3</span>${d.name}
+        <span class="remove" onclick="removeAssign('${u.id}',${a.deptId})">✕</span></span>` : '';
+    }).join('');
+
+    html += `<div class="user-row">
+      <div class="user-avatar">${initials}</div>
+      <div class="user-info">
+        <div class="user-name">${u.name}</div>
+        <div class="user-id">${u.id}</div>
+        <div class="user-dept">${deptTags||'<span class="no-dept">未所属</span>'}</div>
+      </div>
+      <button class="assign-btn" onclick="toggleAssign('${u.id}')">＋ 部署を紐付け</button>
+    </div>`;
+
+    if(assignOpen) {
+      const lv3 = getLv3Depts();
+      const opts = lv3.map(d => {
+        const path = getDeptPath(d.id);
+        const picked = state.pickedDept === d.id;
+        return `<div class="dept-opt${picked?' picked':''}" onclick="pickDept(${d.id})">
+          <span class="lv-badge lv3-b" style="font-size:9px">Lv3</span>
+          <div><div class="dept-opt-name">${d.name}</div><div class="dept-opt-path">${path}</div></div>
+        </div>`;
+      }).join('') || '<div style="color:var(--text3);font-size:11px;padding:6px">Lv3の部署がありません</div>';
+
+      html += `<div class="assign-popup">
+        <div class="assign-popup-title">部署を選択（Lv3のみ）</div>
+        <div class="dept-select-tree">${opts}</div>
+        <div class="date-row">
+          <div class="form-field"><label>適用開始日</label>
+            <input type="date" id="asgn-from-${u.id}" value="${new Date().toISOString().slice(0,10)}" style="background:var(--bg4);border:1px solid var(--border2);border-radius:5px;color:var(--text);padding:5px 8px;font-size:12px;width:100%;outline:none;">
+          </div>
+          <div class="form-field"><label>適用終了日（空欄=無期限）</label>
+            <input type="date" id="asgn-to-${u.id}" style="background:var(--bg4);border:1px solid var(--border2);border-radius:5px;color:var(--text);padding:5px 8px;font-size:12px;width:100%;outline:none;">
+          </div>
+        </div>
+        <div class="form-btns">
+          <button class="btn btn-primary btn-sm" onclick="confirmAssign('${u.id}')">T_UserDepartment に登録</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelAssign()">キャンセル</button>
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML = html;
+}
+
+function toggleAssign(userId) {
+  state.assigningUser = state.assigningUser === userId ? null : userId;
+  state.pickedDept = null;
+  renderUserPanel();
+}
+function cancelAssign() {
+  state.assigningUser = null;
+  state.pickedDept = null;
+  renderUserPanel();
+}
+function pickDept(deptId) {
+  state.pickedDept = deptId;
+  renderUserPanel();
+}
+function confirmAssign(userId) {
+  if(!state.pickedDept){ alert('部署を選択してください。'); return; }
+  const u = state.users.find(x => x.id === userId);
+  if(u.depts.some(a => a.deptId === state.pickedDept)){ alert('既に紐付け済みです。'); return; }
+  const from = document.getElementById(`asgn-from-${userId}`)?.value || '';
+  const to   = document.getElementById(`asgn-to-${userId}`)?.value   || null;
+  u.depts.push({deptId: state.pickedDept, from, to, isPrimary: u.depts.length === 0 ? 1 : 0});
+  state.assigningUser = null;
+  state.pickedDept = null;
+  renderUserPanel();
+  showSaved('user-panel');
+}
+function removeAssign(userId, deptId) {
+  const u = state.users.find(x => x.id === userId);
+  u.depts = u.depts.filter(a => a.deptId !== deptId);
+  renderUserPanel();
+}
+
+renderDeptPanel();
+renderUserPanel();
+</script>
